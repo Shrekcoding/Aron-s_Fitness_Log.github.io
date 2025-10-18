@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title> Aron's Fitness Tracker</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <div class="brand">🏋️‍♂️ American Fitness Log </div>
+    <div class="controls">
+      <div class="chip">
+        Units
+        <div class="toggle" id="unitsToggle" role="group" aria-label="Units">
+          <button data-unit="lb" class="active" aria-pressed="true">lb</button>
+          <button data-unit="kg" aria-pressed="false">kg</button>
+        </div>
+      </div>
+      <div class="chip">Week <input class="input" id="weekPicker" type="week" /></div>
+      <button class="btn" id="resetWeek">Clear This Week</button>
+      <button class="btn" id="exportJson">Export JSON</button>
+      <button class="btn" id="exportPdf">Export PDF</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Weekly Snapshot (for PDF) -->
+  <div id="weeklyStats">
+    <div class="card">
+      <div class="section-title"><h3>Overall Stats (Current Week)</h3></div>
+      <div class="stats" id="overallStats">
+        <div class="stat"><small>Total Cardio</small><div class="big" id="statCardio">0 min</div><span class="pill" id="statCardioDelta">vs avg: —</span></div>
+        <div class="stat"><small>Total Strength Volume</small><div class="big" id="statVolume">0 lb</div><select class="pill-select exerciseFilter"></select><span class="pill" id="statVolumeDelta">vs avg: —</span></div>
+        <div class="stat"><small>Strength Sessions (filtered)</small><div class="big" id="statSessions">0</div><select class="pill-select exerciseFilter"></select><span class="pill" id="statSessionsDelta">vs avg: —</span></div>
+        <div class="stat"><small>Top Muscle Group (filtered)</small><div class="big" id="statTopGroup">—</div><select class="pill-select exerciseFilter"></select><span class="pill" id="statTopGroupVol">0</span></div>
+      </div>
+      <div class="stats" style="margin-top:12px">
+        <div class="stat"><small>Strength Reps (filtered)</small><div class="big" id="statReps">0</div><select class="pill-select exerciseFilter"></select><span class="pill info" id="statRepsBadge">All exercises</span></div>
+        <div class="stat"><small>Strength Sets (filtered)</small><div class="big" id="statSets">0</div><select class="pill-select exerciseFilter"></select><span class="pill info" id="statSetsBadge">All exercises</span></div>
+        <div class="stat"><small>Avg Working Weight (per set)</small><div class="big" id="statAvgWeight">0 lb</div><select class="pill-select exerciseFilter"></select><span class="pill info" id="statAvgWeightBadge">All exercises</span></div>
+        <div class="stat"><small>Note</small><div class="big" style="font-size:var(--fs-2)">Filters apply to these stats</div><span class="pill">Weighted by sets</span></div>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="section-title">
+        <h3>Weekly Charts — You vs Average</h3>
+        <div class="row" style="gap:8px;justify-content:flex-end">
+          <div><label class="hint" for="chartsExerciseFilter">Charts Exercise</label><select id="chartsExerciseFilter" class="pill-select"></select></div>
+          <div><label class="hint" for="chartsGroupFilter">Charts Muscle Group</label>
+            <select id="chartsGroupFilter" class="pill-select">
+              <option value="__all__">All groups</option>
+              <option value="Chest">Chest</option><option value="Back">Back</option><option value="Shoulders">Shoulders</option>
+              <option value="Biceps">Biceps</option><option value="Triceps">Triceps</option>
+              <option value="Leg Press">Leg Press</option><option value="Leg Extensions">Leg Extensions</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="grid cols-2">
+        <div><div class="section-title"><h3>Cardio Minutes</h3><span class="badge">Weekly</span></div><div class="chart-box"><canvas id="minutesChart"></canvas></div></div>
+        <div><div class="section-title"><h3>Strength Volume</h3><span class="badge">Weekly</span></div><div class="chart-box"><canvas id="volumeChart"></canvas></div></div>
+      </div>
+      <div class="grid cols-3">
+        <div><div class="section-title"><h3>Strength Reps</h3><span class="badge">Weekly</span></div><div class="chart-box"><canvas id="repsChart"></canvas></div></div>
+        <div><div class="section-title"><h3>Strength Sets</h3><span class="badge">Weekly</span></div><div class="chart-box"><canvas id="setsChart"></canvas></div></div>
+        <div><div class="section-title"><h3>Avg Working Weight</h3><span class="badge">Weekly</span></div><div class="chart-box"><canvas id="avgWeightChart"></canvas></div></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Workout Explorer -->
+  <section class="card" id="workoutExplorer">
+    <div class="section-title">
+      <h3>Workout Explorer</h3>
+      <div class="explorer-controls">
+        <div>
+          <label class="hint" for="wxGroup">Muscle Group</label>
+          <select id="wxGroup" class="select">
+            <option>Chest</option><option>Back</option><option>Shoulders</option>
+            <option>Biceps</option><option>Triceps</option>
+            <option>Leg Press</option><option>Leg Extensions</option>
+            <option>Legs</option><option>Core</option><option>Full Body</option>
+          </select>
+        </div>
+        <div class="hint">Click a tile to read (or edit) its description.</div>
+      </div>
+    </div>
+
+    <div id="wxStrip" class="scroller" role="listbox" aria-label="Workout images"></div>
+
+    <div id="wxDetails" class="explorer-details ghost" aria-live="polite">
+      <div class="details-header">
+        <div>
+          <div class="badge" id="wxBadge">—</div>
+          <h3 id="wxTitle" style="margin:.35rem 0 0">Select a workout</h3>
+        </div>
+        <div>
+          <button class="btn" id="wxEditBtn" disabled>Edit</button>
+          <button class="btn" id="wxSaveBtn" style="display:none">Save</button>
+          <button class="btn" id="wxCancelBtn" style="display:none">Cancel</button>
+        </div>
+      </div>
+      <div class="details-body" id="wxBody">
+        <p>Pick an image above to see the workout description.</p>
+      </div>
+      <div class="edit-row" id="wxEditor" style="display:none">
+        <input type="text" id="wxEditTitle" placeholder="Workout title" />
+        <textarea id="wxEditDesc" placeholder="Describe the workout, target muscles, cues, tempo…" rows="4"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- Logs -->
+  <div class="grid cols-1">
+    <section class="card">
+      <div class="section-title"><h3>Cardio Log</h3></div>
+      <div class="row">
+        <div class="mini"><label>Quick Add (preset)</label>
+          <select id="cardioPreset" class="select">
+            <option value="">— choose —</option>
+            <option value="Treadmill">Treadmill</option>
+            <option value="Walking Machine">Walking Machine</option>
+            <option value="Elliptical">Elliptical</option>
+          </select>
+        </div>
+        <div><label>Date</label><input type="date" id="cardioDate" /></div>
+        <div><label>Minutes</label><input type="number" id="cardioMinutes" min="0" step="1" placeholder="e.g. 30" /></div>
+        <div class="mini"><label>&nbsp;</label><button class="btn" id="saveCardio">Add</button></div>
+      </div>
+      <div class="sep"></div>
+      <div class="table-wrap">
+        <table class="table" id="cardioTable">
+          <thead><tr><th>Date</th><th>Exercise</th><th>Minutes</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-title"><h3>Strength Log</h3></div>
+      <div class="row">
+        <div><label>Date</label><input type="date" id="strDate" /></div>
+        <div><label>Muscle Group</label>
+          <select id="strGroup" class="select">
+            <option>Chest</option><option>Back</option><option>Shoulders</option>
+            <option>Biceps</option><option>Triceps</option><option>Legs</option>
+            <option>Core</option><option>Full Body</option>
+          </select>
+        </div>
+        <div><label>Exercise</label><input type="text" id="strExercise" placeholder="e.g. Bench Press" /></div>
+        <div><label>Weight (<span id="unitLabel">lb</span>)</label><input type="number" id="strWeight" min="0" step="1" /></div>
+        <div><label>Reps</label><input type="number" id="strReps" min="1" step="1" /></div>
+        <div><label>Sets</label><input type="number" id="strSets" min="1" step="1" /></div>
+        <div class="mini"><label>&nbsp;</label><button class="btn" id="saveStrength">Add</button></div>
+      </div>
+      <div class="sep"></div>
+      <div class="table-wrap">
+        <table class="table" id="strengthTable">
+          <thead><tr><th>Date</th><th>Group</th><th>Exercise</th><th>Weight</th><th>Reps</th><th>Sets</th><th>Volume</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="hint">Volume = weight × reps × sets (auto-converted with unit toggle).</div>
+    </section>
+  </div>
+
+  <footer class="wrap" style="padding-bottom:60px"> </footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <script src="js/script.js"></script>
+</body>
+</html>

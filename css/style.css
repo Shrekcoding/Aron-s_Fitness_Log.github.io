@@ -1,0 +1,161 @@
+:root{
+  --panel:#121822; --panel-2:#0f1520; --ink:#e8eef8; --ink-dim:#a9b6c8;
+  --accent:#7dd3fc; --muted:#1b2433; --ok:#86efac;
+  --fs-1: clamp(12px, 1.2vw, 13px);
+  --fs-2: clamp(13px, 1.4vw, 14px);
+  --fs-3: clamp(15px, 1.8vw, 16px);
+  --fs-4: clamp(18px, 2.2vw, 20px);
+  --fs-5: clamp(22px, 3vw, 28px);
+  --pad: clamp(10px, 2vw, 16px);
+  --gap: clamp(8px, 1.6vw, 16px);
+  --chart-h: clamp(220px, 36vh, 380px);
+  --tile-w: 260px; --tile-h: 170px;
+
+  /* 🔁 Set your background image here */
+  
+  /* 🔦 Dark overlay for readability */
+  
+  /* 🕒 Pan speed (lower = faster) */
+  --bg-pan-duration: 30s;
+
+  /* Extra width so the pan never shows edges */
+  --bg-bleed: 120%;
+}
+
+*{box-sizing:border-box}
+html, body{height:100%}
+
+/* ===== Full-screen, panning background ===== */
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Helvetica,sans-serif;
+  color:var(--ink);
+  position:relative;       /* enable pseudo elements */
+  background:transparent;  /* moved to ::before/::after layers */
+  isolation:isolate;       /* sane stacking */
+  overflow-x:hidden;       /* no horizontal scroll from pan */
+}
+
+/* Moving image layer (behind everything) */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  background-image: url(../images/weights%20repeat%20.jpg);
+  background-repeat:no-repeat;
+  background-size: var(--bg-bleed) auto; /* wider than viewport for pan */
+  background-position: 0% 50%;           /* start left center */
+  animation: bg-pan var(--bg-pan-duration) linear infinite;
+  will-change: background-position;
+}
+
+/* Fixed overlay for readability */
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  background: var(--bg-overlay);
+  pointer-events:none;
+}
+
+/* Left → right → left pan */
+@keyframes bg-pan{
+  0%   { background-position:   0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position:   0% 50%; }
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce){
+  body::before{ animation:none; background-position:50% 50%; }
+}
+
+/* ===== UI & layout (unchanged) ===== */
+header{position:sticky;top:0;z-index:10;backdrop-filter:saturate(120%) blur(8px);
+  background-color:rgba(11,15,20,.6); border-bottom:1px solid #1a2536;}
+.wrap{max-width:1200px;margin:0 auto;padding:var(--pad)}
+.bar{display:flex;gap:var(--gap);align-items:center;justify-content:space-between;flex-wrap:wrap}
+.brand{font-weight:700;letter-spacing:.2px;font-size:var(--fs-4)}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chip,.btn,.select,.input{
+  background:var(--panel); border:1px solid #2a384f; color:var(--ink);
+  padding:10px 12px; border-radius:12px; font:500 var(--fs-2)/1 system-ui; outline:none;
+}
+.btn{cursor:pointer; transition:transform .05s ease, background .2s}
+.btn:hover{background:#172235} .btn:active{transform: translateY(1px)}
+.select,.input{appearance:none; min-height:40px}
+.grid{display:grid; gap:var(--gap); margin:18px 0}
+.grid.cols-2{grid-template-columns:repeat(2,1fr)}
+.grid.cols-3{grid-template-columns:repeat(3,1fr)}
+.grid.cols-1{grid-template-columns:1fr}
+@media (max-width:1024px){.grid.cols-3{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){.grid.cols-3,.grid.cols-2{grid-template-columns:1fr}}
+.card{
+  background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+  border:1px solid #203149; border-radius:18px; padding:var(--pad);
+  box-shadow:0 10px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.04);
+}
+.card h3{margin:0 0 10px;font-size:var(--fs-3);color:#dce7f7}
+.stats{display:grid; grid-template-columns:repeat(4,1fr); gap:var(--gap)}
+@media (max-width:1024px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.stats{grid-template-columns:1fr}}
+.stat{background:var(--muted); border:1px solid #26334a; border-radius:14px; padding:14px}
+.stat small{color:var(--ink-dim); font-size:var(--fs-1)}
+.stat .big{font-size:var(--fs-5);font-weight:800;margin:6px 0}
+.toggle{background:#0d1622; border:1px solid #26334a; border-radius:12px; padding:4px; display:inline-flex; gap:4px}
+.toggle button{background:transparent; color:var(--ink-dim); border:0; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600}
+.toggle button.active{background:var(--accent); color:#002233}
+label{font-size:var(--fs-1);color:var(--ink-dim);display:block;margin-bottom:6px}
+input[type="number"],input[type="text"],input[type="date"],select,textarea{
+  width:100%; padding:10px 10px; border-radius:10px; border:1px solid #2a384f; background:#0e1623; color:#fff; min-height:42px
+}
+.table-wrap{width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch}
+.table{width:100%; border-collapse:separate; border-spacing:0 8px; min-width:640px}
+.table th,.table td{padding:8px 10px; text-align:left; white-space:nowrap}
+.table thead th{font-size:var(--fs-1); color:var(--ink-dim)}
+.table tbody tr{background:#101a28;border:1px solid #24324a}
+.pill{padding:4px 8px; border-radius:999px; font-weight:700; font-size:12px; background:#0f2330; border:1px solid #203149; color:#c6e6ff}
+.ok{color:#042; background:linear-gradient(180deg,#0c2a18,#0a1d12); border-color:#1e3b28}
+.info{color:#0b263b; background:linear-gradient(180deg,#0b2a3f,#0a1c2a); border-color:#1b3b53}
+.section-title{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; flex-wrap:wrap}
+.hint{font-size:12px; color:var(--ink-dim)}
+.badge{font-size:11px;border:1px solid #2b3a52;border-radius:999px;padding:4px 8px;color:#bcd0ea;background:#0f1a29}
+.sep{height:1px;background:#1c2840;border:0;margin:10px 0}
+
+/* Workout Explorer */
+.explorer-controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.scroller{
+  display:grid; grid-auto-flow:column; grid-auto-columns:var(--tile-w);
+  gap:12px; overflow-x:auto; padding-bottom:4px; scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+}
+.tile{
+  scroll-snap-align:start; position:relative; height:var(--tile-h);
+  border-radius:14px; border:1px solid #223249; background:#0e1623; overflow:hidden;
+  cursor:pointer; outline:none;
+}
+.tile img{width:100%; height:100%; object-fit:cover; display:block; filter:saturate(1.06) contrast(1.05)}
+.tile .label{
+  position:absolute; left:8px; bottom:8px; background:rgba(0,0,0,.45);
+  padding:6px 8px; border-radius:10px; font-size:12px; color:#e7f4ff
+}
+.tile:focus{box-shadow:0 0 0 3px #7dd3fc55}
+.scroller::-webkit-scrollbar{height:10px}
+.scroller::-webkit-scrollbar-thumb{background:#233552;border-radius:999px}
+.explorer-details{
+  margin-top:12px; padding:14px; border-radius:14px; border:1px solid #223249; background:#0d1622;
+}
+.details-header{display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+.details-body{margin-top:8px}
+.details-body p{margin:0; line-height:1.5}
+.edit-row{display:flex; gap:8px; flex-wrap:wrap; align-items:flex-start; margin-top:8px}
+.edit-row input,.edit-row textarea{flex:1 1 200px}
+.ghost{opacity:.7}
+@media (max-width:560px){
+  :root{ --tile-w: 78vw; --tile-h: 46vw; }
+}
+
+.chart-box{width:100%; height:var(--chart-h)}
+.chart-box canvas{width:100% !important; height:100% !important; display:block}
